@@ -1,21 +1,29 @@
 import requests
 
-url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
+topstories_url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
+item_url = "https://hacker-news.firebaseio.com/v0/item/{}.json?print=pretty"
 
-
-def get_top_stories():
-    r = requests.get(url)
+def get_top_stories_ids():
+    r = requests.get(topstories_url)
     data = r.json()
     return data
 
 def get_story_from_id(id):
-    url = "https://hacker-news.firebaseio.com/v0/item/{}.json?print=pretty".format(id)
+    url = item_url.format(id)
     r = requests.get(url)
     return r.json()
 
+def get_top_stories():
+    data = []
+    stories_id = get_top_stories_ids()
+    for _id in stories_id:
+        data.append(get_story_from_id(_id))
+
+    return data
+
 
 if __name__ == "__main__":
-    data = get_top_stories()
+    data = get_top_stories_ids()
     print("{} stories".format(len(data)))
 
     for (i, id) in enumerate(data):
