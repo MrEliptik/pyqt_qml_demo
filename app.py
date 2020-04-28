@@ -8,7 +8,7 @@ from queue import Queue
 
 from PyQt5.QtGui import QGuiApplication, QIcon, QColor
 from PyQt5.QtQml import QQmlApplicationEngine, QQmlComponent
-from PyQt5.QtCore import QObject, QUrl, Qt, QCoreApplication, QAbstractListModel, QModelIndex, QTimer, qsrand, qrand, QTime, pyqtSlot
+from PyQt5.QtCore import QObject, QUrl, Qt, QCoreApplication, QAbstractListModel, QModelIndex, QTimer, qsrand, qrand, QTime, pyqtSlot, pyqtSignal
 from PyQt5.QtQuick import QQuickItem
 
 def test_preview():
@@ -119,15 +119,22 @@ class Model(QAbstractListModel):
     def roleNames(self):
         return self._roles
 
+def HNFetcher(QObject):
+    def __init__(self):
+        super().__init__()
+        self.story_fetched = pyqtSignal()
 
-def fetchStories(q):
-    ids = get_top_stories_ids()
-    for _id in ids:
-        q.put(get_story_from_id(id))
+    def fetchStories(self, q):
+        ids = get_top_stories_ids()
+        for _id in ids:
+            q.put(get_story_from_id(id))
+            story_fetched.emit()
 
-@pyqtSlot(int)
-def onStoryFetched(story):
-    pass
+    @pyqtSlot()
+    def onStoryFetched():
+        if not q.empty():
+            story = q.get()
+            model.model.addData(Data(256, 144, QColor("#6e6e6e"), story['title']))
 
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -158,17 +165,11 @@ if __name__ == "__main__":
     # Doesn't work because we try to access GUI from another thread
     #x = threading.Thread(target=fetchAndAdd, args=(model,))
     #x.start()
-    stories_q = Queue()
-    x = threading.Thread(target=fetchStories, args=(stories_q,))
-    x.start() 
+    #fetcher = HNFetcher()
+    #fetcher.story_fetched.connect(fetcher.onStoryFetched)
 
-    #stories_q.get()
-    #model.addData(Data(256, 144, QColor("#6e6e6e"), story['title']))
-    '''
-    for (i, id) in enumerate(data):
-        if i == 10: break
-        story = get_story_from_id(id)
-        story['title'], story['by'], story['score'], story['url']
-    '''
+    stories_q = Queue()
+    #x = threading.Thread(target=fetcher.fetchStories, args=(stories_q,))
+    #x.start() 
 
     sys.exit(app.exec_())
