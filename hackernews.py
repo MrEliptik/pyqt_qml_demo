@@ -1,6 +1,11 @@
 import requests
 
 topstories_url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
+newstories_url = "https://hacker-news.firebaseio.com/v0/newstories.json?print=pretty"
+beststories_url = "https://hacker-news.firebaseio.com/v0/beststories.json?print=pretty"
+askstories_url = "https://hacker-news.firebaseio.com/v0/askstories.json?print=pretty"
+showstories_url = "https://hacker-news.firebaseio.com/v0/showstories.json?print=pretty"
+jobstories_url = "https://hacker-news.firebaseio.com/v0/jobstories.json?print=pretty"
 item_url = "https://hacker-news.firebaseio.com/v0/item/{}.json?print=pretty"
 
 def get_top_stories_ids():
