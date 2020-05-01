@@ -31,14 +31,17 @@ def test_preview():
         print("title: {} - description: {} - image: {}".format(title, description, image))
 
 class Data(object):
-    def __init__(self, width=35, height=35, color=QColor("red"), title=None, image=None, url=None, description=None):
+    def __init__(self, width=35, height=35, color=QColor("red"), title=None, image=None, author=None, url=None, description=None, point=None, comments=None):
         self._width = width
         self._height = height
         self._color = color
         self._title = title
         self._image = image
+        self._author = author
         self._url = url
         self._description = description
+        self._point = point
+        self._comments = comments
 
     def width(self):
         return self._width
@@ -55,11 +58,20 @@ class Data(object):
     def image(self):
         return self._image
 
+    def author(self):
+        return self._author
+
     def url(self):
         return self._url
 
     def description(self):
         return self._description
+    
+    def point(self):
+        return self._point
+
+    def comments(self):
+        return self._comments
 
 class Model(QAbstractListModel):
 
@@ -68,11 +80,15 @@ class Model(QAbstractListModel):
     ColorRole = Qt.UserRole + 3
     TitleRole = Qt.UserRole + 4
     ImageRole = Qt.UserRole + 5
-    UrlRole = Qt.UserRole + 6
-    DescriptionRole = Qt.UserRole + 7
+    AuthorRole = Qt.UserRole + 6
+    UrlRole = Qt.UserRole + 7
+    DescriptionRole = Qt.UserRole + 8
+    PointRole = Qt.UserRole + 9
+    CommentsRole = Qt.UserRole + 10
 
     _roles = {WidthRole: b"width", HeightRole: b"height", ColorRole: b"color", TitleRole:b"title",
-        ImageRole:b"image", UrlRole:b"url", DescriptionRole:b"description"}
+        ImageRole:b"image", AuthorRole:b"author", UrlRole:b"url", DescriptionRole:b"description", 
+        PointRole:b"point", CommentsRole:b"comments"}
 
     def __init__(self, parent=None):
         QAbstractListModel.__init__(self, parent)
@@ -107,6 +123,9 @@ class Model(QAbstractListModel):
 
         if role == self.ImageRole:
             return data.image()
+
+        if role == self.AuthorRole:
+            return data.author()
         
         if role == self.UrlRole:
             return data.url()
@@ -114,40 +133,62 @@ class Model(QAbstractListModel):
         if role == self.DescriptionRole:
             return data.description()
 
+        if role == self.PointRole:
+            return data.point()
+
+        if role == self.CommentsRole:
+            return data.comments()
+
         return QVariant()
 
     def roleNames(self):
         return self._roles
 
-def HNFetcher(QObject):
+class HNFetcher(QObject):
+    # Must be a class variable and not instance variable
+    story_fetched = pyqtSignal()
+
     def __init__(self):
         super().__init__()
-        self.story_fetched = pyqtSignal()
+        self.story_fetched.connect(self.onStoryFetched)
+        self.stories_q = Queue()
+        self.last_fetched_id_index = 0
+        self.ids = None
 
-    def fetchStories(self, q):
-        ids = get_top_stories_ids()
-        for _id in ids:
-            q.put(get_story_from_id(id))
-            story_fetched.emit()
+    def fetchStories(self, how_much=10):
+        count = 0
+        if not self.ids:
+            self.ids = get_top_stories_ids()
+        for i in range(self.last_fetched_id_index, len(self.ids)):
+            self.stories_q.put(get_story_from_id(self.ids[i]))
+            self.story_fetched.emit()
+            self.last_fetched_id = i
+            count += 1
+            if count == how_much: break
 
     @pyqtSlot()
-    def onStoryFetched():
-        if not q.empty():
-            story = q.get()
-            model.model.addData(Data(256, 144, QColor("#6e6e6e"), story['title']))
+    def onStoryFetched(self):
+        if not self.stories_q.empty():
+            story = self.stories_q.get()
+            print(story)
+            model.addData(Data(256, 144, QColor("#6e6e6e"), story['title'], 
+                image="https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg", 
+                author=story['by'], url=story['url'], point=story['score'], comments=story['descendants']))
 
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QGuiApplication(sys.argv)
-    #app.setWindowIcon(QIcon("icon.png"))
+    app.setWindowIcon(QIcon("icon.png"))
 
     # Add engin
     engine = QQmlApplicationEngine()
 
     # add initial data
     model = Model()
+    '''
     for i in range(30):
         model.addData(Data(256, 144, QColor("#6e6e6e"), "Test"))
+    '''
 
     # And register it in the context of QML
     context = engine.rootContext()
@@ -161,15 +202,14 @@ if __name__ == "__main__":
 
     engine.quit.connect(app.quit)
 
+    fetcher = HNFetcher()
     ## Launch thread to get data from HN
-    # Doesn't work because we try to access GUI from another thread
-    #x = threading.Thread(target=fetchAndAdd, args=(model,))
-    #x.start()
-    #fetcher = HNFetcher()
-    #fetcher.story_fetched.connect(fetcher.onStoryFetched)
+    x = threading.Thread(target=fetcher.fetchStories, args=(10,))
+    x.start() 
 
-    stories_q = Queue()
-    #x = threading.Thread(target=fetcher.fetchStories, args=(stories_q,))
-    #x.start() 
+    win = engine.rootObjects()[0]
+    moreBtn = win.findChild(QObject, "more_btn")
+    moreBtn.clicked.connect(fetcher.fetchStories)
+
 
     sys.exit(app.exec_())
