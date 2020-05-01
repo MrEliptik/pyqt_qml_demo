@@ -14,10 +14,8 @@ ApplicationWindow {
     id: window
 
     header: ToolBar {
-        width: parent.width
         anchors.horizontalCenter: parent.horizontalCenter
 
-        leftPadding: 8
         Material.elevation: 4
         background: Rectangle {
             implicitWidth: parent.width
@@ -32,6 +30,7 @@ ApplicationWindow {
             
             ToolButton {
                 id: topBtn
+                icon.source: "resources/icons/top.png"
                 text: "Top" // icon-doc-text-inv-1
                 focusPolicy: Qt.TabFocus
                 onClicked: mainController.menuController.newFileClicked();
@@ -44,6 +43,7 @@ ApplicationWindow {
             }
             ToolButton {
                 id: newsBtn
+                icon.source: "resources/icons/news.png"
                 text: "News" // icon-doc-text-inv-1
                 focusPolicy: Qt.TabFocus
                 onClicked: mainController.menuController.newFileClicked();
@@ -56,6 +56,7 @@ ApplicationWindow {
             }
             ToolButton {
                 id: bestBtn
+                icon.source: "resources/icons/best.png"
                 text: "Best" // icon-doc-text-inv-1
                 focusPolicy: Qt.TabFocus
                 onClicked: mainController.menuController.newFileClicked();
@@ -68,6 +69,7 @@ ApplicationWindow {
             }
             ToolButton {
                 id: askBtn
+                icon.source: "resources/icons/ask.png"
                 text: "Ask" // icon-folder
                 focusPolicy: Qt.TabFocus
                 onClicked: openDialog.open()
@@ -80,6 +82,7 @@ ApplicationWindow {
             }
             ToolButton {
                 id: showBtn
+                icon.source: "resources/icons/show.png"
                 text: "Show" // icon-floppy
                 focusPolicy: Qt.TabFocus
                 onClicked: saveDialog.open()
@@ -92,6 +95,7 @@ ApplicationWindow {
             }
             ToolButton {
                 id: jobBtn
+                icon.source: "resources/icons/job.png"
                 text: "Job" // icon-floppy
                 focusPolicy: Qt.TabFocus
                 onClicked: saveDialog.open()
